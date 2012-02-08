@@ -18,7 +18,7 @@ describe('hurt_locker_tests', function(){
 Mother = (function(){
 	return{
 		unclicked: function(rows,columns){
-			return Grid.create(rows,columns,function(){ return {state:'unclicked',chance:100}})
+			return new Grid(rows,columns,function(){ return {state:'unclicked',chance:100}})
 		}
 	}	
 	
@@ -27,21 +27,51 @@ Mother = (function(){
 describe('grid_utility', function(){
 
 	it('should_create_grid_with_values_set_to_cell_values',function(){
-		var grid = Grid.create(3,3,function(x,y){return 9});
+		var grid = new Grid(3,3,function(x,y){return 9});
 		window.debug = grid;
-		expect(grid.length).toEqual(3);
-		expect(grid[0].length).toEqual(3);
-		expect(grid[0][0]).toEqual(9);
+		expect(grid.length()).toEqual(3);
+		expect(grid.width()).toEqual(3);
+		// expect(grid[0][0]).toEqual(9);
 	});
 	
 	it('should_get_neighboring_cells', function(){
 		grid = Mother.unclicked(3,3);
-		expect(Grid.neighbors(grid,1,1).length).toEqual(8);
-		expect(Grid.neighbors(grid,0,0).length).toEqual(3);
-		expect(Grid.neighbors(grid,0,1).length).toEqual(5);
+		expect(grid.neighbors(1,1).length).toEqual(8);
+		expect(grid.neighbors(0,0).length).toEqual(3);
+		expect(grid.neighbors(0,1).length).toEqual(5);
 		
-		expect(Grid.neighbors(grid,0,1)[0].chance).toEqual(100);
-		expect(Grid.neighbors(grid,0,1)[0].state).toEqual('unclicked');
+		expect(grid.neighbors(0,1)[0].chance).toEqual(100);
+		expect(grid.neighbors(0,1)[0].state).toEqual('unclicked');
+	});
+	
+	it('should_get_min_cell', function(){
+		
+		grid = Mother.unclicked(3,3);
+		grid.grid[0][0] = MineCell(1,5);
+		grid.grid[0][1] = MineCell(1,1);
+		
+		var min_cell = grid.min(function(min,current){ return min.chance <= current.chance ? min : current });
+		
+		expect(min_cell).toEqual(grid.grid[0][1]);
+		
+	});
+	
+	it('should_find_cell_position_in_grid', function(){
+		
+		grid = Mother.unclicked(3,3);
+		var cell_to_find = grid.grid[1][2];
+		
+		var position = grid.find(cell_to_find);
+		
+		expect(position.x).toEqual(1);
+		expect(position.y).toEqual(2);
+		
+	});
+	
+	it('should_get_string_version_of_grid', function(){
+		grid = new Grid(2,2,function(){ return 'X'})
+		result = grid.to_s();
+		expect(result).toEqual('X|X\nX|X');
 	});
 	
 });
@@ -63,22 +93,42 @@ describe('minefield',function(){
 			minefield = Minefield(grid,1);
 		});
 		
-		it('should_set_probability_of_neighbors', function(){
-
-			grid[1][1] = MineCell(1,0);
-			minefield.set_neighbors_chance(1,1);
-			expect(grid[0][0].chance).toEqual(1/8);
+		it('should_overwrite_neighboring_cells_probability_when_cacluated_value_is_lower', function(){
+			grid.grid[0][0] = MineCell('unclicked',3/8);
+			grid.grid[1][1] = MineCell(1,0);
+			minefield.set_neighbors_chance(1,1,100);
+			expect(grid.grid[0][0].chance).toEqual(1/8);
 		});
 		
-		it('should_set_probability_of_neighbors',function(){
+		it('should_not_overwrite_neighboring_cells_probability_when_cacluated_value_is_higher',function(){
+			
+			grid.grid[0][0] = MineCell('unclicked',1/8);
+			grid.grid[1][1] = MineCell(2,0);
+			
+			minefield.set_neighbors_chance(1,1,100);			
+			expect(grid.grid[0][0].chance).toEqual(1/8);
+		});
 		
-		// it('should_not_overwite_a_lesser_probability_cell',function(){
-		// 	
-		// 	grid[0][0] = MineCell(1,1/8);
-		// 	grid[1][1] = MineCell(2,0);
-		// 	
-		// 	minefield.set_neighbors_chance(1,1);			
-		// 	expect(grid[0][0].chance).toEqual(2/8);
+		it('should_evaluate_all_cells_neighbors_chance',function(){
+			
+			spyOn(minefield, 'set_neighbors_chance').andCallThrough();
+			
+			minefield.evaluate_all_cells();
+			
+			expect(minefield.set_neighbors_chance.callCount).toEqual(9);
+			
+		});
+		
+		it('should_get_next_click_by_the_minimum_cell', function(){
+			
+			var expected_min_cell = MineCell(0,0);
+			spyOn(Grid.prototype, 'min').andReturn(expected_min_cell);
+			spyOn(minefield,'evaluate_all_cells').andCallThrough();
+			
+			var next_click = minefield.next_click();
+			
+			expect(minefield.evaluate_all_cells).toHaveBeenCalled();
+			expect(next_click).toEqual(expected_min_cell);
 		});
 		
 	});
