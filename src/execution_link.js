@@ -6,4 +6,7 @@ var add_to_page = function(js_url){
 }
 
 javascript:(function(){add_to_page('http://dl.dropbox.com/u/41174287/minesweeper/src/hurtLocker.js')})();
-javascript:(function(){add_to_page('http://dl.dropbox.com/u/41174287/minesweeper/src/main.js')})();
+setTimeout(function() {
+	javascript:(function(){add_to_page('http://dl.dropbox.com/u/41174287/minesweeper/src/main.js')})();
+},400);
+
