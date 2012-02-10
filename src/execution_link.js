@@ -5,7 +5,7 @@ var add_to_page = function(js_url){
 	document.getElementsByTagName('head')[0].appendChild(_my_script);
 }
 
-javascript:(function(){add_to_page('http://dl.dropbox.com/u/41174287/minesweeper/src/hurtLocker.js')})();
+javascript:(function(){add_to_page('http://dl.dropbox.com/u/41174287/minesweeper/src/minefield.js')})();
 setTimeout(function() {
 	javascript:(function(){add_to_page('http://dl.dropbox.com/u/41174287/minesweeper/src/main.js')})();
 },400);

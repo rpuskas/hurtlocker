@@ -1,44 +1,42 @@
 $(function(){
 	
-	Utility = {};
-	Utility.pad = function(number) {
-	    var str = '' + number;
-	    while (str.length < 7) { str = ' ' + str; }
-	    return str;
-	}
-	
 	HL = (function(){
 		var cell_locator = function(row,column){
 			return $("#g1" + "r" + row + "c" + column);
 		}
-		var cell_value_locator = function(row,column){
-			var cell_id = "#g1" + "r" + row + "c" + column;
-			return cell_value($(cell_id).attr('class'));
-		}
-		var get_mine_count = function(value){
-			var mine_count = parseInt(value.replace('mines',''))
-			return mine_count;
-		}
-		var cell_value = function(value){
-			var no_chance = 0;
-			var guarentee = 1;
-			if(value === 'unclicked') return MineCell(value,-1);	
-			else if(value === 'marked') return MineCell(value,guarentee);
-			else if(value.indexOf('mines') >= 0) return MineCell(get_mine_count(value),no_chance);
-			else throw 'cell selector not found';
+
+		var convert_to_mine_cell = function(row,column){
+			
+			var cell = {};
+			var state = cell_locator(row,column).attr('class');
+		
+			if(state === 'unclicked'){
+				cell.chance = MineCell.UNEVAL;	
+				cell.state = state;
+			} 
+			else if(state === 'marked'){
+				cell.chance = MineCell.A_BOMB;
+				cell.state = state;
+			} 
+			else if(state.indexOf('mines') >= 0){
+				cell.state = parseInt(state.replace('mines',''));
+				cell.chance = MineCell.NO_CHANCE;
+			} 
+			else throw 'cell value not recognized';	
+			
+			return cell;
 		}
 		
+		
 		return{
-			cell_value: function(value){
-				return cell_value(value);
-			},
+			
 			create_minefield: function(){
 				
 				var mines_remaining = parseInt($('#g1minesRemaining').attr('title'));
 				var length = $('tr.field:first').find('td').length;
 				var width = $('tr.field').length;
 				
-				return new Minefield(new Grid(length,width,cell_value_locator),mines_remaining);
+				return new Minefield(new Grid(length,width,convert_to_mine_cell),mines_remaining);
 			},
 			click_cell : function(position) {	
 				cell_locator(position.x,position.y).trigger({
@@ -72,20 +70,17 @@ $(function(){
 		if(unclicked_bombs.length > 0){
 			HL.mark_all(_.map(unclicked_bombs,function(x){ return minefield.data.indexOf(x); }));
 			HL.mark_all(unclicked_bombs);
-			// unclicked_bombs.forEach(function(x){ x = minefield.data.indexOf(x); console.log('marking: ' + x.x + ' ' + x.y) })
+			unclicked_bombs.forEach(function(x){ x = minefield.data.indexOf(x); });
 
 			return solve_next_move();
 		}
 	
-		// console.log(minefield.data.to_s(function(x){return Utility.pad(Math.round(x.chance*100)/100)}));
+		// console.log(minefield.to_s());
 		var position = minefield.data.indexOf(minefield.next_click());
 		HL.click_cell(position);
-		// console.log('clicked(x,y): ' + position.x + ' ' + position.y);
+		// console.log('clicked[x,y]: ' + position.x + ' ' + position.y);
 		
-		//Need time to let the grid set itself up again... would be better if event based.
-		//setTimeout(function() {
-			if(HL.alive()) solve_next_move();
-		//},1);
+		if(HL.alive()) solve_next_move();
 		
 	};
 	solve_next_move();

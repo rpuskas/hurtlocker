@@ -1,13 +1,12 @@
-Mother = (function(){
-	return{
-		unclicked: function(rows,columns){
-			return new Grid(rows,columns,function(){ return {state:'unclicked',chance:1}})
-		}
-	}	
-	
-}());
-
 describe('grid_utility', function(){
+	
+	Mother = (function(){
+		return{
+			unclicked: function(rows,columns){
+				return new Grid(rows,columns,function(){ return {state:'unclicked',chance:1}})
+			}
+		}	
+	}());
 
 	it('should_create_grid_with_values_set_to_cell_values',function(){
 		var grid = new Grid(3,3,function(x,y){return 9});
