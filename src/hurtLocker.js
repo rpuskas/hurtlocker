@@ -6,23 +6,22 @@ Minefield = function(data,bombs){
 	var _bombs = bombs;
 	var _data = data;
 	
-	max_val = function(first,second){
+	max_val_unless_zero = function(first,second){
+		if(first === 0 || second === 0) return 0;
 		return first > second ? first : second;
 	}
 	
 	//a bit of a smell... better way to initilize the default state?
 	get_unclicked_neighbors_chance = function(home_state,number_of_neighbors,marked_neighbors){
-		return isNaN(home_state) ? 0 : (home_state - marked_neighbors) / number_of_neighbors;
+		return isNaN(home_state) ? -1 : (home_state - marked_neighbors) / number_of_neighbors;
 	}
 			
 	return {
 		
 		next_click: function(){
 			return _data.min(function(min,current){ 
-				if(current.chance == 0){
-					return min;
-				}
-				return min.chance <= current.chance ? min : current 
+				if(current.chance == 0 && current.state !== 'unclicked') return min;
+				else return current.chance <= min.chance ? current : min; 
 			});
 		},
 		
@@ -32,7 +31,7 @@ Minefield = function(data,bombs){
 		},
 		
 		//This is the beast... significantly over functional, and under tested
-		set_neighbors_chance: function(x,y,random_chance){
+		set_neighbors_chance: function(x,y){
 			var neighbors = _data.neighbors(x,y);
 			var home = _data.cell(x,y);
 			var bomb_certainty = 1;
@@ -43,14 +42,13 @@ Minefield = function(data,bombs){
 			var unclicked_neighbor_chance = get_unclicked_neighbors_chance(home.state, unclicked_neighbors.length, marked_neighbors.length);
 			
 			for(var i = 0; i < unclicked_neighbors.length; i++){
-				var min = max_val(unclicked_neighbors[i].chance, unclicked_neighbor_chance);				
-				unclicked_neighbors[i].chance = max_val(random_chance,min);
+				 unclicked_neighbors[i].chance = max_val_unless_zero(unclicked_neighbors[i].chance, unclicked_neighbor_chance);				
 			}
 		},
 		
 		get_unmarked_bombs: function(){
 			var unmarked_bombs = [];
-			that = this;
+			var that = this;
 			_data.each(function(x,y){
 				cell = that.data.cell(x,y);//why is this not each item in grid?
 				if(cell.chance === 1 && cell.state === 'unclicked'){
@@ -62,7 +60,13 @@ Minefield = function(data,bombs){
 		
 		evaluate_all_cells: function(){
 			var that = this
-			_data.each(function(x,y){ that.set_neighbors_chance(x,y,that.random_chance()); });
+			_data.each(function(x,y){ that.set_neighbors_chance(x,y); });
+			
+			var random = this.random_chance();
+			_data.each(function(x,y){ 
+				var cell = that.data.cell(x,y);
+				if(cell.chance === -1) { cell.chance = random;};
+			});
 		},
 		
 		data: _data
@@ -110,7 +114,7 @@ Grid = (function(){
 			var result = '';
 			var end_of_row = this.grid[0].length-1;
 
-			that = this;
+			var that = this;
 			this.each(function(x,y){
 				result += cell_to_s(that.grid[x][y]);
 				y === end_of_row ? result += '\n' : result += '|';
@@ -121,7 +125,7 @@ Grid = (function(){
 
 		indexOf: function(cell){
 			return_val = null;
-			that = this;
+			var that = this;
 			this.each(function(x,y){
 				if (that.grid[x][y] == cell) { return_val = {x: x, y: y} };
 			});
@@ -140,8 +144,8 @@ Grid = (function(){
 
 		//passing in the function here from outside the program... should be some type of comparison opertor, even better, let the cell do it 
 		min: function(get_min){
-			that = this;
-			var min_cell = MineCell(0,100);
+			var that = this;
+			var min_cell = MineCell('X',Number.MAX_VALUE);
 			this.each(function(x,y){
 				min_cell = get_min(min_cell,that.grid[x][y]);
 			});

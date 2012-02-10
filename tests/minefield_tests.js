@@ -22,37 +22,6 @@ describe('minefield',function(){
 		beforeEach(function(){
 			grid = Mother.unclicked(3,3);
 			minefield = Minefield(grid,1);
-			console.log(grid);
-		});
-		
-		it('should_overwrite_neighboring_cells_probability_when_cacluated_value_is_higher_than_random_chance', function(){
-			grid.set_cell(0,0,MineCell('unclicked',0));
-			grid.set_cell(1,1,MineCell(7,0));
-			
-			var random_chance = .2;
-			minefield.set_neighbors_chance(1,1,random_chance);
-			
-			expect(grid.cell(0,0).chance).toEqual(7/8);
-		});
-		
-		it('should_not_overwrite_neighboring_cells_probability_when_cacluated_value_is_lower_than_random_chance',function(){
-			
-			grid.set_cell(0,0,MineCell('unclicked',0));
-			grid.set_cell(1,1,MineCell(2,0));
-			
-			random_chance = .5;
-			minefield.set_neighbors_chance(1,1,.5);			
-			expect(grid.cell(0,0).chance).toEqual(.5);
-		});
-		
-		it('should_evaluate_all_cells_neighbors_chance',function(){
-			
-			spyOn(minefield, 'set_neighbors_chance').andCallThrough();
-			
-			minefield.evaluate_all_cells();
-			
-			expect(minefield.set_neighbors_chance.callCount).toEqual(9);
-			
 		});
 		
 		it('should_get_next_click_by_the_minimum_cell', function(){
@@ -76,5 +45,62 @@ describe('minefield',function(){
 		});
 		
 	});
+	
+	describe('when_evaluting_cells',function(){
+		
+		var grid;
+		var minefield;
+		
+		beforeEach(function(){
+			grid = Mother.unclicked(3,3);
+			minefield = Minefield(grid,1);
+		});
+		
+		it('should_evaluate_all_cells_neighbors_chance',function(){
+			
+			spyOn(minefield, 'set_neighbors_chance').andCallThrough();
+			minefield.evaluate_all_cells();
+			expect(minefield.set_neighbors_chance.callCount).toEqual(9);
+			
+		});
+		
+		it('should_overwrite_neighboring_cells_probability_when_cacluated_value_is_higher_than_random_chance', function(){
+			grid.set_cell(0,0,MineCell('unclicked',0));
+			grid.set_cell(1,1,MineCell(7,0));
+
+			var random_chance = .2;
+			minefield.set_neighbors_chance(1,1,random_chance);
+
+			expect(grid.cell(0,0).chance).toEqual(7/8);
+		});
+
+		it('should_not_overwrite_neighboring_cells_probability_when_cacluated_value_is_lower_than_random_chance',function(){
+
+			grid.set_cell(0,0,MineCell('unclicked',0));
+			grid.set_cell(1,1,MineCell(2,0));
+
+			random_chance = .5;
+			minefield.set_neighbors_chance(1,1,.5);			
+			expect(grid.cell(0,0).chance).toEqual(.5);
+		});
+		
+		it('should_evaluate_a_marked_cell_as_a_bomb',function(){
+
+			grid.set_cell(0,0,MineCell(1,0));
+			grid.set_cell(0,1,MineCell(2,0));
+			grid.set_cell(0,2,MineCell(2,0));
+			grid.set_cell(1,0,MineCell('marked',0));
+			grid.set_cell(1,1,MineCell(1,0));
+			grid.set_cell(1,2,MineCell('unclicked',0));
+			grid.set_cell(2,0,MineCell(1,0));
+			grid.set_cell(2,1,MineCell(1,0));
+			grid.set_cell(2,2,MineCell(2,0));
+			
+			minefield.set_neighbors_chance(1,1,.5);
+			
+			expect(grid.cell(1,2).chance).toEqual(0);	
+		})
+		
+	})
 	
 });
