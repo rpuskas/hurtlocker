@@ -1,5 +1,11 @@
 $(function(){
 	
+- [ ] a task list item
+- [ ] list syntax required
+- [ ] normal **formatting**, @mentions, #1234 refs
+- [ ] incomplete
+- [x] completed
+	
 	HL = (function(){
 		var cell_locator = function(row,column){
 			return $("#g1" + "r" + row + "c" + column);
