@@ -1,5 +1,5 @@
 $(function(){
-	
+	This is a comment
 	HL = (function(){
 		var cell_locator = function(row,column){
 			return $("#g1" + "r" + row + "c" + column);
